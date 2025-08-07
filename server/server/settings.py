@@ -39,8 +39,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third party apps
     "rest_framework",
+    "rest_framework_simplejwt",
+    "drf_yasg",
     # My Apps
     "api",
+    "cookies",
+    "http_methods",
+    "inspection",
+    "statuscode",
 ]
 
 MIDDLEWARE = [
