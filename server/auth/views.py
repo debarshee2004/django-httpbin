@@ -11,7 +11,6 @@ from .authentication import (
     HTTPBinDigestAuthentication,
 )
 from .serializers import (
-    AuthResponseSerializer,
     TokenValidationSerializer,
     TokenValidationResponseSerializer,
 )
@@ -25,10 +24,9 @@ from .utils import (
 @method_decorator(csrf_exempt, name="dispatch")
 class BasicAuthView(APIView):
     """
-    Basic Authentication endpoint
+    Basic Authentication endpoint - matches httpbin.org behavior
     GET /auth/basic-auth/{username}/{password}
     """
-
     authentication_classes = [HTTPBinBasicAuthentication]
     permission_classes = [AllowAny]
 
@@ -47,26 +45,26 @@ class BasicAuthView(APIView):
             response["WWW-Authenticate"] = 'Basic realm="HTTPBin"'
             return response
 
+        # Return httpbin.org style response
         response_data = {
             "authenticated": True,
             "user": username,
-            "token": None,
             "method": "basic",
             "headers": extract_request_headers(request),
             "url": request.build_absolute_uri(),
+            "origin": request.META.get('REMOTE_ADDR', ''),
+            "args": {"username": username, "password": password}
         }
 
-        serializer = AuthResponseSerializer(response_data)
-        return Response(serializer.data)
+        return Response(response_data)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class BearerAuthView(APIView):
     """
-    Bearer Token Authentication endpoint
+    Bearer Token Authentication endpoint - matches httpbin.org behavior
     GET /auth/bearer
     """
-
     authentication_classes = [HTTPBinBearerAuthentication]
     permission_classes = [AllowAny]
 
@@ -80,6 +78,7 @@ class BearerAuthView(APIView):
 
         user, token = auth_result[0]
 
+        # Return httpbin.org style response
         response_data = {
             "authenticated": True,
             "user": user,
@@ -87,19 +86,19 @@ class BearerAuthView(APIView):
             "method": "bearer",
             "headers": extract_request_headers(request),
             "url": request.build_absolute_uri(),
+            "origin": request.META.get('REMOTE_ADDR', ''),
+            "args": {}
         }
 
-        serializer = AuthResponseSerializer(response_data)
-        return Response(serializer.data)
+        return Response(response_data)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class HiddenBasicAuthView(APIView):
     """
-    Hidden Basic Authentication endpoint (returns 404 instead of 401)
+    Hidden Basic Authentication endpoint - returns 404 instead of 401
     GET /auth/hidden-basic-auth/{username}/{password}
     """
-
     authentication_classes = [HTTPBinBasicAuthentication]
     permission_classes = [AllowAny]
 
@@ -114,34 +113,36 @@ class HiddenBasicAuthView(APIView):
         if auth_username != username or auth_password != password:
             return Response({"error": "Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # Return httpbin.org style response
         response_data = {
             "authenticated": True,
             "user": username,
-            "token": None,
             "method": "hidden-basic",
             "headers": extract_request_headers(request),
             "url": request.build_absolute_uri(),
+            "origin": request.META.get('REMOTE_ADDR', ''),
+            "args": {"username": username, "password": password}
         }
 
-        serializer = AuthResponseSerializer(response_data)
-        return Response(serializer.data)
+        return Response(response_data)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class DigestAuthView(APIView):
     """
-    Digest Authentication endpoint
+    Digest Authentication endpoint - matches httpbin.org behavior
     GET /auth/digest-auth/{qop}/{username}/{password}
     """
-
     authentication_classes = [HTTPBinDigestAuthentication]
     permission_classes = [AllowAny]
 
-    def get(self, request, qop, username, password):
+    def get(self, request, qop, username, password, algo, stale_after):
         auth_result = HTTPBinDigestAuthentication().authenticate(request)
 
         if not auth_result:
-            challenge, nonce, opaque = generate_digest_challenge(qop=qop)
+            challenge, nonce, opaque = generate_digest_challenge(
+                qop=qop, algo=algo
+            )
             response = HttpResponse("Unauthorized", status=status.HTTP_401_UNAUTHORIZED)
             response["WWW-Authenticate"] = f"Digest {challenge}"
             return response
@@ -150,33 +151,42 @@ class DigestAuthView(APIView):
 
         # Validate digest response
         if not validate_digest_response(
-            username, password, request.method, request.get_full_path(), auth_dict
+            username, password, request.method, 
+            request.get_full_path(), auth_dict
         ):
-            challenge, nonce, opaque = generate_digest_challenge(qop=qop)
+            challenge, nonce, opaque = generate_digest_challenge(
+                qop=qop, algo=algo
+            )
             response = HttpResponse("Unauthorized", status=status.HTTP_401_UNAUTHORIZED)
             response["WWW-Authenticate"] = f"Digest {challenge}"
             return response
 
+        # Return httpbin.org style response
         response_data = {
             "authenticated": True,
             "user": username,
-            "token": None,
             "method": "digest",
             "headers": extract_request_headers(request),
             "url": request.build_absolute_uri(),
+            "origin": request.META.get('REMOTE_ADDR', ''),
+            "args": {
+                "qop": qop, 
+                "username": username, 
+                "password": password,
+                "algo": algo,
+                "stale_after": stale_after
+            }
         }
 
-        serializer = AuthResponseSerializer(response_data)
-        return Response(serializer.data)
+        return Response(response_data)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class TokenValidationView(APIView):
     """
-    Token Validation endpoint
+    Token Validation endpoint - matches httpbin.org behavior
     POST /auth/validate-token
     """
-
     permission_classes = [AllowAny]
 
     def post(self, request):

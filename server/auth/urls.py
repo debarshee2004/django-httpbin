@@ -16,7 +16,8 @@ urlpatterns = [
         name="hidden-basic-auth",
     ),
     path(
-        "digest-auth/<str:qop>/<str:username>/<str:password>/",
+        "digest-auth/<str:qop>/<str:username>/<str:password>/"
+        "<str:algo>/<str:stale_after>/",
         views.DigestAuthView.as_view(),
         name="digest-auth",
     ),

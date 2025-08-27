@@ -2,12 +2,15 @@ import hashlib
 import secrets
 
 
-def generate_digest_challenge(realm="HTTPBin", qop="auth"):
+def generate_digest_challenge(realm="HTTPBin", qop="auth", algo="MD5"):
     """Generate digest authentication challenge"""
     nonce = secrets.token_hex(16)
     opaque = secrets.token_hex(16)
 
-    challenge = f'realm="{realm}", qop="{qop}", nonce="{nonce}", opaque="{opaque}"'
+    challenge = (
+        f'realm="{realm}", qop="{qop}", nonce="{nonce}", '
+        f'opaque="{opaque}", algorithm="{algo}"'
+    )
     return challenge, nonce, opaque
 
 
@@ -19,13 +22,28 @@ def validate_digest_response(username, password, method, uri, auth_dict):
     qop = auth_dict.get("qop")
     nc = auth_dict.get("nc")
     cnonce = auth_dict.get("cnonce")
+    algorithm = auth_dict.get("algorithm", "MD5")
 
     if not all([nonce, response]):
         return False
 
-    # Calculate expected response
-    ha1 = hashlib.md5(f"{username}:{realm}:{password}".encode()).hexdigest()
-    ha2 = hashlib.md5(f"{method}:{uri}".encode()).hexdigest()
+    # Calculate expected response based on algorithm
+    if algorithm.upper() == "MD5":
+        ha1 = hashlib.md5(
+            f"{username}:{realm}:{password}".encode()
+        ).hexdigest()
+        ha2 = hashlib.md5(f"{method}:{uri}".encode()).hexdigest()
+    elif algorithm.upper() == "SHA-256":
+        ha1 = hashlib.sha256(
+            f"{username}:{realm}:{password}".encode()
+        ).hexdigest()
+        ha2 = hashlib.sha256(f"{method}:{uri}".encode()).hexdigest()
+    else:
+        # Default to MD5 for unsupported algorithms
+        ha1 = hashlib.md5(
+            f"{username}:{realm}:{password}".encode()
+        ).hexdigest()
+        ha2 = hashlib.md5(f"{method}:{uri}".encode()).hexdigest()
 
     if qop:
         expected = hashlib.md5(
