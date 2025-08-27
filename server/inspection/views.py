@@ -5,6 +5,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import uuid as uuid_lib
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 def _extract_headers(request):
@@ -23,6 +25,7 @@ def _extract_headers(request):
 class HeadersView(APIView):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)})
     def get(self, request):
         return Response({"headers": _extract_headers(request)})
 
@@ -31,6 +34,7 @@ class HeadersView(APIView):
 class IPView(APIView):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)})
     def get(self, request):
         return Response({"origin": request.META.get("REMOTE_ADDR", "")})
 
@@ -39,6 +43,7 @@ class IPView(APIView):
 class UserAgentView(APIView):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)})
     def get(self, request):
         ua = request.META.get("HTTP_USER_AGENT", "")
         return Response({"user-agent": ua})
@@ -48,6 +53,7 @@ class UserAgentView(APIView):
 class UUIDView(APIView):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)})
     def get(self, request):
         return Response({"uuid": str(uuid_lib.uuid4())})
 
@@ -56,8 +62,19 @@ class UUIDView(APIView):
 class ResponseHeadersView(APIView):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name="key",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Any query params will be echoed as response headers",
+            )
+        ],
+        responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)},
+    )
     def get(self, request):
-        # Echo back query params as response headers
         resp = Response({"args": request.GET.dict()})
         for k, v in request.GET.items():
             resp[k] = v

@@ -5,6 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -15,6 +17,40 @@ class GetView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name="query",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description="Example query param"
+            )
+        ],
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "args": openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        additional_properties=openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Items(type=openapi.TYPE_STRING)
+                        ),
+                    ),
+                    "headers": openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        additional_properties=openapi.Schema(
+                            type=openapi.TYPE_STRING
+                        ),
+                    ),
+                    "origin": openapi.Schema(type=openapi.TYPE_STRING),
+                    "url": openapi.Schema(type=openapi.TYPE_STRING),
+                    "method": openapi.Schema(type=openapi.TYPE_STRING),
+                },
+            )
+        },
+    )
     def get(self, request):
         response_data = {
             "args": dict(request.GET),
@@ -46,6 +82,30 @@ class PostView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            additional_properties=openapi.Schema(type=openapi.TYPE_STRING),
+            description="Form or JSON body"
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "args": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "data": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "files": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "form": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "headers": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "json": openapi.Schema(type=openapi.TYPE_OBJECT,
+                                             nullable=True),
+                    "origin": openapi.Schema(type=openapi.TYPE_STRING),
+                    "url": openapi.Schema(type=openapi.TYPE_STRING),
+                    "method": openapi.Schema(type=openapi.TYPE_STRING),
+                },
+            )
+        },
+    )
     def post(self, request):
         response_data = {
             "args": dict(request.GET),
@@ -81,6 +141,14 @@ class PutView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            additional_properties=openapi.Schema(type=openapi.TYPE_STRING),
+            description="Form or JSON body"
+        ),
+        responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)},
+    )
     def put(self, request):
         response_data = {
             "args": dict(request.GET),
@@ -116,6 +184,14 @@ class PatchView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            additional_properties=openapi.Schema(type=openapi.TYPE_STRING),
+            description="Form or JSON body"
+        ),
+        responses={200: openapi.Schema(type=openapi.TYPE_OBJECT)},
+    )
     def patch(self, request):
         response_data = {
             "args": dict(request.GET),
@@ -151,6 +227,20 @@ class DeleteView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    "args": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "headers": openapi.Schema(type=openapi.TYPE_OBJECT),
+                    "origin": openapi.Schema(type=openapi.TYPE_STRING),
+                    "url": openapi.Schema(type=openapi.TYPE_STRING),
+                    "method": openapi.Schema(type=openapi.TYPE_STRING),
+                }
+            )
+        }
+    )
     def delete(self, request):
         response_data = {
             "args": dict(request.GET),
