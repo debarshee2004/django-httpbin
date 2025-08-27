@@ -36,6 +36,8 @@ urlpatterns = [
     path("auth/", include("auth.urls"), name="auth"),
     path("http_methods/", include("http_methods.urls"), name="http_methods"),
     path("statuscode/", include("statuscode.urls"), name="statuscode"),
+    path("inspection/", include("inspection.urls"), name="inspection"),
+    path("cookies/", include("cookies.urls"), name="cookies"),
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),
