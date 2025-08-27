@@ -34,6 +34,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls"), name="api"),
     path("auth/", include("auth.urls"), name="auth"),
+    path("http_methods/", include("http_methods.urls"), name="http_methods"),
     path(
         "swagger/",
         schema_view.with_ui("swagger", cache_timeout=0),
